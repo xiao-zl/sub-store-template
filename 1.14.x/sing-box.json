@@ -636,7 +636,13 @@
     {
       "tag": "all-auto",
       "type": "urltest",
-      "outbounds": [],
+      "outbounds": [
+        "hk-auto",
+        "tw-auto",
+        "jp-auto",
+        "sg-auto",
+        "us-auto"
+      ],
       "url": "https://www.gstatic.com/generate_204",
       "interval": "1m",
       "tolerance": 50
