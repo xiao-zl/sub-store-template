@@ -35,6 +35,7 @@ const DEFAULT_CORP_CIDRS = [
   "10.102.0.254/32",
   "10.104.0.254/32",
   "10.103.13.33/32",
+  "10.103.14.28/32",
   "10.103.14.29/32",
   "36.150.163.143/32"
 ];
@@ -49,9 +50,10 @@ const homeWifiSsids = ($arguments.home_wifi_ssid || "ZTE-SuNthc-5G")
 
 const corpDns = $arguments.corp_dns || "10.169.1.9";
 const corpDomain = $arguments.corp_domain || "longshine.com";
-const corpCidrs = $arguments.corp_cidrs
-  ? $arguments.corp_cidrs.split(",").map(s => s.trim()).filter(Boolean)
-  : DEFAULT_CORP_CIDRS;
+const corpCidrs = [...new Set([
+  ...DEFAULT_CORP_CIDRS,
+  ...($arguments.corp_cidrs || "").split(",").map(s => s.trim()).filter(Boolean)
+])];
 
 // =====================
 // 1) 工具函数
