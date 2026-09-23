@@ -1,6 +1,6 @@
 // =====================
 // SubStore 脚本：sing-box 1.14.x 配置构建
-// 功能：自定义规则 + Zashboard + Tailscale + Tailscale DNS + 公司内网本地 DNS + 去广告 + SSID 自动回家
+// 功能：自定义规则 + Tailscale + Tailscale DNS + 公司内网本地 DNS + 去广告 + SSID 自动回家
 //
 // 推荐 SubStore 参数：
 // tskey=你的_tailscale_auth_key
@@ -26,6 +26,7 @@ const config = JSON.parse($content);
 const TS_TAG = "tailscale";
 const TS_DNS_TAG = "ts-dns";
 const CORP_DNS_TAG = "corp-dns";
+const RULE_SET_HTTP_CLIENT_TAG = "rule-set-direct";
 const LEGACY_TS_TAG = "ts-ep";
 const LEGACY_SUBNET_TAG = "TS-SUBNET";
 const DEFAULT_HOME_CIDR = "10.10.10.0/24";
@@ -108,12 +109,22 @@ const cleanLegacyRule = rule => {
 config.route = config.route || {};
 config.route.rules = config.route.rules || [];
 config.route.rule_set = config.route.rule_set || [];
+config.http_clients = config.http_clients || [];
+if (!config.http_clients.some(client => client.tag === RULE_SET_HTTP_CLIENT_TAG)) {
+  config.http_clients.push({ tag: RULE_SET_HTTP_CLIENT_TAG });
+}
+config.route.default_http_client = RULE_SET_HTTP_CLIENT_TAG;
 
 for (const ruleSet of config.route.rule_set) {
-  if (!ruleSet.download_detour) continue;
-  ruleSet.http_client = ruleSet.http_client || {};
-  ruleSet.http_client.detour = ruleSet.http_client.detour || ruleSet.download_detour;
+  if (ruleSet.download_detour && ruleSet.download_detour !== "direct") {
+    ruleSet.http_client = ruleSet.http_client || {};
+    ruleSet.http_client.detour = ruleSet.http_client.detour || ruleSet.download_detour;
+  }
   delete ruleSet.download_detour;
+  if (ruleSet.http_client?.detour === "direct") {
+    delete ruleSet.http_client.detour;
+    if (Object.keys(ruleSet.http_client).length === 0) delete ruleSet.http_client;
+  }
 }
 
 // =====================
@@ -147,12 +158,13 @@ if (customRules.length > 0) {
 }
 
 // =====================
-// 4) experimental / clash api / zashboard
+// 4) experimental / clash api
 // =====================
 config.experimental = config.experimental || {};
 config.experimental.clash_api = config.experimental.clash_api || {};
-config.experimental.clash_api.external_ui_download_url =
-    "https://ghfast.top/https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip";
+delete config.experimental.clash_api.external_ui;
+delete config.experimental.clash_api.external_ui_download_url;
+delete config.experimental.clash_api.external_ui_download_detour;
 
 // =====================
 // 5) endpoints / Tailscale
@@ -326,10 +338,7 @@ ensureRuleSetOnce("category-ads-all", {
   tag: "category-ads-all",
   type: "remote",
   format: "binary",
-  url: "https://fastly.jsdelivr.net/gh/SagerNet/sing-geosite@rule-set/geosite-category-ads-all.srs",
-  http_client: {
-    detour: "direct"
-  }
+  url: "https://fastly.jsdelivr.net/gh/SagerNet/sing-geosite@rule-set/geosite-category-ads-all.srs"
 });
 
 if (!config.route.rules.some(r => hasRuleSet(r, "category-ads-all"))) {
