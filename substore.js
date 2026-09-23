@@ -9,6 +9,7 @@
 // corp_dns=10.169.1.9
 // corp_domain=longshine.com
 // corp_cidrs=10.111.14.0/24,10.103.6.0/24,...
+// corp_route_excludes=10.111.14.0/24,10.103.6.0/24,...
 //
 // 说明：
 // - 公司域名 longshine.com 使用公司 DNS 解析。
@@ -26,6 +27,7 @@ const config = JSON.parse($content);
 const TS_TAG = "tailscale";
 const TS_DNS_TAG = "ts-dns";
 const CORP_DNS_TAG = "corp-dns";
+const CORP_DIRECT_TAG = "corp-direct";
 const RULE_SET_HTTP_CLIENT_TAG = "rule-set-proxy";
 const LEGACY_RULE_SET_HTTP_CLIENT_TAG = "rule-set-direct";
 const LEGACY_TS_TAG = "ts-ep";
@@ -48,7 +50,7 @@ const DEFAULT_CORP_ROUTE_EXCLUDES = [
   "10.104.0.0/24",
   "10.103.13.0/24",
   "10.103.14.0/24",
-  "36.150.163.0/24"
+  "36.150.163.143/32"
 ];
 
 const tskey = $arguments.tskey;
@@ -64,6 +66,10 @@ const corpDomain = $arguments.corp_domain || "longshine.com";
 const corpCidrs = [...new Set([
   ...DEFAULT_CORP_CIDRS,
   ...($arguments.corp_cidrs || "").split(",").map(s => s.trim()).filter(Boolean)
+])];
+const corpRouteExcludes = [...new Set([
+  ...DEFAULT_CORP_ROUTE_EXCLUDES,
+  ...($arguments.corp_route_excludes || "").split(",").map(s => s.trim()).filter(Boolean)
 ])];
 
 // =====================
@@ -312,7 +318,7 @@ for (const inbound of config.inbounds) {
     "::1/128",
     "fe80::/10",
     "fd00::/8",
-    ...DEFAULT_CORP_ROUTE_EXCLUDES
+    ...corpRouteExcludes
   ];
 
   inbound.route_exclude_address = Array.isArray(inbound.route_exclude_address)
@@ -331,6 +337,14 @@ for (const inbound of config.inbounds) {
 // =====================
 config.outbounds = config.outbounds || [];
 config.outbounds = config.outbounds.filter(outbound => outbound.tag !== LEGACY_SUBNET_TAG);
+const corpDirectOptions = {
+  tag: CORP_DIRECT_TAG,
+  type: "direct",
+  domain_resolver: { server: CORP_DNS_TAG }
+};
+const corpDirect = config.outbounds.find(outbound => outbound.tag === CORP_DIRECT_TAG);
+if (corpDirect) Object.assign(corpDirect, corpDirectOptions);
+else config.outbounds.push(corpDirectOptions);
 for (const outbound of config.outbounds) {
   if (Array.isArray(outbound.outbounds)) {
     outbound.outbounds = outbound.outbounds
@@ -387,7 +401,7 @@ const managedCidrs = [...corpCidrs, homeCidr, DEFAULT_HOME_CIDR, "100.64.0.0/10"
 config.route.rules = config.route.rules
   .filter(cleanLegacyRule)
   .filter(rule => {
-    if (rule.outbound === "direct" && arr(rule.domain_suffix).includes(corpDomain)) return false;
+    if (["direct", CORP_DIRECT_TAG].includes(rule.outbound) && arr(rule.domain_suffix).includes(corpDomain)) return false;
     if (arr(rule.preferred_by).includes(TS_TAG)) return false;
     return !managedCidrs.some(cidr => hasCidr(rule, cidr));
   });
@@ -396,7 +410,7 @@ const managedRules = [
   {
     domain_suffix: corpDomain,
     action: "route",
-    outbound: "direct"
+    outbound: CORP_DIRECT_TAG
   },
   ...corpCidrs.map(cidr => ({
     ip_cidr: [cidr],
