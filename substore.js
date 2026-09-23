@@ -26,7 +26,8 @@ const config = JSON.parse($content);
 const TS_TAG = "tailscale";
 const TS_DNS_TAG = "ts-dns";
 const CORP_DNS_TAG = "corp-dns";
-const RULE_SET_HTTP_CLIENT_TAG = "rule-set-direct";
+const RULE_SET_HTTP_CLIENT_TAG = "rule-set-proxy";
+const LEGACY_RULE_SET_HTTP_CLIENT_TAG = "rule-set-direct";
 const LEGACY_TS_TAG = "ts-ep";
 const LEGACY_SUBNET_TAG = "TS-SUBNET";
 const DEFAULT_HOME_CIDR = "10.10.10.0/24";
@@ -39,6 +40,15 @@ const DEFAULT_CORP_CIDRS = [
   "10.103.14.28/32",
   "10.103.14.29/32",
   "36.150.163.143/32"
+];
+const DEFAULT_CORP_ROUTE_EXCLUDES = [
+  "10.111.14.0/24",
+  "10.103.6.0/24",
+  "10.102.0.0/24",
+  "10.104.0.0/24",
+  "10.103.13.0/24",
+  "10.103.14.0/24",
+  "36.150.163.0/24"
 ];
 
 const tskey = $arguments.tskey;
@@ -110,9 +120,10 @@ config.route = config.route || {};
 config.route.rules = config.route.rules || [];
 config.route.rule_set = config.route.rule_set || [];
 config.http_clients = config.http_clients || [];
-if (!config.http_clients.some(client => client.tag === RULE_SET_HTTP_CLIENT_TAG)) {
-  config.http_clients.push({ tag: RULE_SET_HTTP_CLIENT_TAG });
-}
+config.http_clients = config.http_clients.filter(client => client.tag !== LEGACY_RULE_SET_HTTP_CLIENT_TAG);
+const ruleSetHttpClient = config.http_clients.find(client => client.tag === RULE_SET_HTTP_CLIENT_TAG);
+if (ruleSetHttpClient) ruleSetHttpClient.detour = "proxy";
+else config.http_clients.push({ tag: RULE_SET_HTTP_CLIENT_TAG, detour: "proxy" });
 config.route.default_http_client = RULE_SET_HTTP_CLIENT_TAG;
 
 for (const ruleSet of config.route.rule_set) {
@@ -291,7 +302,7 @@ for (const inbound of config.inbounds) {
     inbound.address = inbound.address.filter(a => !String(a).includes(":"));
   }
 
-  // 公司 VPN 网段交给系统/VPN 选路；不要排除整个 10.0.0.0/8。
+  // 使用较宽前缀，保证公司 VPN 安装的 /32 路由优先于 TUN 排除路由。
   const excludeList = [
     "127.0.0.0/8",
     "172.16.0.0/12",
@@ -301,7 +312,7 @@ for (const inbound of config.inbounds) {
     "::1/128",
     "fe80::/10",
     "fd00::/8",
-    ...corpCidrs
+    ...DEFAULT_CORP_ROUTE_EXCLUDES
   ];
 
   inbound.route_exclude_address = Array.isArray(inbound.route_exclude_address)
