@@ -5,15 +5,27 @@ const compatible_outbound = {
 }
 
 let compatible
-let config = JSON.parse($files[0])
-let proxies = await produceArtifact({
+const parser = typeof ProxyUtils !== 'undefined' && ProxyUtils.JSON5 ? ProxyUtils.JSON5 : JSON
+let config
+try {
+  config = parser.parse(typeof $content !== 'undefined' && $content ? $content : $files[0])
+} catch (error) {
+  throw new Error(`配置文件不是合法的 JSON${parser === JSON ? '' : '5'}: ${error.message || error}`)
+}
+
+const data = JSON.parse(await produceArtifact({
   name,
   type: /^1$|col/i.test(type) ? 'collection' : 'subscription',
   platform: 'sing-box',
-  produceType: 'internal',
-})
+}))
+const outbounds = data.outbounds || []
+const endpoints = data.endpoints || []
+const proxies = [...outbounds, ...endpoints]
 
-config.outbounds.push(...proxies)
+config.outbounds = config.outbounds || []
+config.endpoints = config.endpoints || []
+config.outbounds.push(...outbounds)
+config.endpoints.push(...endpoints)
 
 config.outbounds.map(i => {
   if (i.tag === 'all') {
