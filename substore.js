@@ -28,8 +28,8 @@ const TS_TAG = "tailscale";
 const TS_DNS_TAG = "ts-dns";
 const CORP_DNS_TAG = "corp-dns";
 const CORP_DIRECT_TAG = "corp-direct";
-const RULE_SET_HTTP_CLIENT_TAG = "rule-set-proxy";
-const LEGACY_RULE_SET_HTTP_CLIENT_TAG = "rule-set-direct";
+const RULE_SET_HTTP_CLIENT_TAG = "rule-set-direct";
+const LEGACY_RULE_SET_HTTP_CLIENT_TAG = "rule-set-proxy";
 const LEGACY_TS_TAG = "ts-ep";
 const LEGACY_SUBNET_TAG = "TS-SUBNET";
 const DEFAULT_HOME_CIDR = "10.10.10.0/24";
@@ -129,8 +129,8 @@ config.route.rule_set = config.route.rule_set || [];
 config.http_clients = config.http_clients || [];
 config.http_clients = config.http_clients.filter(client => client.tag !== LEGACY_RULE_SET_HTTP_CLIENT_TAG);
 const ruleSetHttpClient = config.http_clients.find(client => client.tag === RULE_SET_HTTP_CLIENT_TAG);
-if (ruleSetHttpClient) ruleSetHttpClient.detour = "proxy";
-else config.http_clients.push({ tag: RULE_SET_HTTP_CLIENT_TAG, detour: "proxy" });
+if (ruleSetHttpClient) delete ruleSetHttpClient.detour;
+else config.http_clients.push({ tag: RULE_SET_HTTP_CLIENT_TAG });
 config.route.default_http_client = RULE_SET_HTTP_CLIENT_TAG;
 
 for (const ruleSet of config.route.rule_set) {
@@ -147,12 +147,8 @@ for (const ruleSet of config.route.rule_set) {
       /^(?:https:\/\/(?:ghfast\.top|gh\.xiaozl\.net)\/)?(?=https:\/\/raw\.githubusercontent\.com\/)/,
       "https://gh.xiaozl.net/",
     );
-  if (ruleSet.download_detour && ruleSet.download_detour !== "direct") {
-    ruleSet.http_client = ruleSet.http_client || {};
-    ruleSet.http_client.detour = ruleSet.http_client.detour || ruleSet.download_detour;
-  }
   delete ruleSet.download_detour;
-  if (ruleSet.http_client?.detour === "direct") {
+  if (ruleSet.http_client?.detour) {
     delete ruleSet.http_client.detour;
     if (Object.keys(ruleSet.http_client).length === 0) delete ruleSet.http_client;
   }

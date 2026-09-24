@@ -1,8 +1,7 @@
 {
   "http_clients": [
     {
-      "tag": "rule-set-proxy",
-      "detour": "proxy"
+      "tag": "rule-set-direct"
     }
   ],
   "dns": {
@@ -287,7 +286,7 @@
       }
     ],
     "final": "final",
-    "default_http_client": "rule-set-proxy",
+    "default_http_client": "rule-set-direct",
     "auto_detect_interface": true
   },
   "outbounds": [
