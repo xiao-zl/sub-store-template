@@ -9,7 +9,6 @@
 // home_wifi_ssid=ZTE-SuNthc-5G
 // corp_dns=10.169.1.9
 // corp_domain=longshine.com
-// corp_interface=utun6
 // corp_cidrs=10.111.14.0/24,10.103.0.0/16,...
 // corp_route_excludes=10.111.14.0/24,10.103.0.0/16,...
 //
@@ -38,6 +37,7 @@ const DEFAULT_HOME_CIDR = "10.10.10.0/24";
 const DEFAULT_CORP_CIDRS = [
   "10.111.14.0/24",
   "10.103.0.0/16",
+  "10.107.0.0/16",
   "10.123.1.0/24",
   "10.102.0.254/32",
   "10.104.0.254/32",
@@ -46,6 +46,7 @@ const DEFAULT_CORP_CIDRS = [
 const DEFAULT_CORP_ROUTE_EXCLUDES = [
   "10.111.14.0/24",
   "10.103.0.0/16",
+  "10.107.0.0/16",
   "10.123.1.0/24",
   "10.102.0.0/24",
   "10.104.0.0/24",
@@ -64,7 +65,6 @@ const homeWifiSsids = ($arguments.home_wifi_ssid || "ZTE-SuNthc-5G")
 
 const corpDns = $arguments.corp_dns || "10.169.1.9";
 const corpDomain = $arguments.corp_domain || "longshine.com";
-const corpInterface = $arguments.corp_interface || "utun6";
 const corpCidrs = [...new Set([
   ...DEFAULT_CORP_CIDRS,
   ...($arguments.corp_cidrs || "").split(",").map(s => s.trim()).filter(Boolean)
@@ -356,7 +356,6 @@ config.outbounds = config.outbounds.filter(outbound => outbound.tag !== LEGACY_S
 const corpDirectOptions = {
   tag: CORP_DIRECT_TAG,
   type: "direct",
-  bind_interface: corpInterface,
   domain_resolver: { server: CORP_DNS_TAG }
 };
 const corpDirect = config.outbounds.find(outbound => outbound.tag === CORP_DIRECT_TAG);
@@ -432,7 +431,7 @@ const managedRules = [
   ...corpCidrs.map(cidr => ({
     ip_cidr: [cidr],
     action: "route",
-    outbound: CORP_DIRECT_TAG
+    outbound: "direct"
   })),
   {
     type: "logical",
