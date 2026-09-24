@@ -242,6 +242,8 @@ if (customRules.length > 0) {
 // =====================
 config.experimental = config.experimental || {};
 config.experimental.clash_api = config.experimental.clash_api || {};
+config.experimental.cache_file = config.experimental.cache_file || {};
+config.experimental.cache_file.store_fakeip = false;
 delete config.experimental.clash_api.external_ui;
 delete config.experimental.clash_api.external_ui_download_url;
 delete config.experimental.clash_api.external_ui_download_detour;
