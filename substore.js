@@ -50,6 +50,7 @@ const DEFAULT_CORP_ROUTE_EXCLUDES = [
   "10.104.0.0/24",
   "10.103.13.0/24",
   "10.103.14.0/24",
+  "10.169.1.0/24",
   "36.150.163.143/32"
 ];
 
@@ -133,6 +134,9 @@ else config.http_clients.push({ tag: RULE_SET_HTTP_CLIENT_TAG, detour: "proxy" }
 config.route.default_http_client = RULE_SET_HTTP_CLIENT_TAG;
 
 for (const ruleSet of config.route.rule_set) {
+  if (ruleSet.url?.startsWith("https://ghfast.top/https://raw.githubusercontent.com/")) {
+    ruleSet.url = ruleSet.url.slice("https://ghfast.top/".length);
+  }
   if (ruleSet.download_detour && ruleSet.download_detour !== "direct") {
     ruleSet.http_client = ruleSet.http_client || {};
     ruleSet.http_client.detour = ruleSet.http_client.detour || ruleSet.download_detour;
