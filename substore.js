@@ -319,6 +319,10 @@ config.inbounds = config.inbounds || [];
 for (const inbound of config.inbounds) {
   if (inbound.type !== "tun") continue;
 
+  if (inbound.platform?.http_proxy) {
+    inbound.platform.http_proxy.enabled = false;
+  }
+
   // IPv4 only：删除 TUN IPv6 地址
   if (Array.isArray(inbound.address)) {
     inbound.address = inbound.address.filter(a => !String(a).includes(":"));
