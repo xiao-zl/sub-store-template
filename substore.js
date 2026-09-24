@@ -4,6 +4,7 @@
 //
 // 推荐 SubStore 参数：
 // tskey=你的_tailscale_auth_key
+// github_proxy=你的_GitHub_代理前缀
 // home_cidr=10.10.10.0/24
 // home_wifi_ssid=ZTE-SuNthc-5G
 // corp_dns=10.169.1.9
@@ -55,6 +56,7 @@ const DEFAULT_CORP_ROUTE_EXCLUDES = [
 ];
 
 const tskey = $arguments.tskey;
+const githubProxy = String($arguments.github_proxy || "").trim().replace(/\/+$/, "");
 
 const homeCidr = $arguments.home_cidr || DEFAULT_HOME_CIDR;
 const homeWifiSsids = ($arguments.home_wifi_ssid || "ZTE-SuNthc-5G")
@@ -77,6 +79,23 @@ const corpRouteExcludes = [...new Set([
 // 1) 工具函数
 // =====================
 const arr = v => Array.isArray(v) ? v : (v ? [v] : []);
+
+const applyGitHubProxy = url => {
+  if (!url) return url;
+  const rawUrl = url
+    .replace(
+      "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/",
+      "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/sing/",
+    )
+    .replace(
+      "https://fastly.jsdelivr.net/gh/SagerNet/sing-geosite@rule-set/",
+      "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/",
+    );
+  const rawIndex = rawUrl.indexOf("https://raw.githubusercontent.com/");
+  if (rawIndex < 0) return rawUrl;
+  const normalizedUrl = rawUrl.slice(rawIndex);
+  return githubProxy ? `${githubProxy}/${normalizedUrl}` : normalizedUrl;
+};
 
 const hasRuleSet = (rule, tag) => {
   const rs = rule?.rule_set;
@@ -134,19 +153,7 @@ else config.http_clients.push({ tag: RULE_SET_HTTP_CLIENT_TAG });
 config.route.default_http_client = RULE_SET_HTTP_CLIENT_TAG;
 
 for (const ruleSet of config.route.rule_set) {
-  ruleSet.url = ruleSet.url
-    ?.replace(
-      "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/",
-      "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/sing/",
-    )
-    .replace(
-      "https://fastly.jsdelivr.net/gh/SagerNet/sing-geosite@rule-set/",
-      "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/",
-    )
-    .replace(
-      /^(?:https:\/\/(?:ghfast\.top|gh\.xiaozl\.net)\/)?(?=https:\/\/raw\.githubusercontent\.com\/)/,
-      "https://gh.xiaozl.net/",
-    );
+  ruleSet.url = applyGitHubProxy(ruleSet.url);
   delete ruleSet.download_detour;
   if (ruleSet.http_client?.detour) {
     delete ruleSet.http_client.detour;
@@ -373,7 +380,7 @@ ensureRuleSetOnce("category-ads-all", {
   tag: "category-ads-all",
   type: "remote",
   format: "binary",
-  url: "https://gh.xiaozl.net/https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs"
+  url: applyGitHubProxy("https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs")
 });
 
 if (!config.route.rules.some(r => hasRuleSet(r, "category-ads-all"))) {
