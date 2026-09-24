@@ -134,10 +134,19 @@ else config.http_clients.push({ tag: RULE_SET_HTTP_CLIENT_TAG, detour: "proxy" }
 config.route.default_http_client = RULE_SET_HTTP_CLIENT_TAG;
 
 for (const ruleSet of config.route.rule_set) {
-  ruleSet.url = ruleSet.url?.replace(
-    /^https:\/\/(?:ghfast\.top\/https:\/\/)?raw\.githubusercontent\.com\/MetaCubeX\/meta-rules-dat\/refs\/heads\/sing\//,
-    "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/",
-  );
+  ruleSet.url = ruleSet.url
+    ?.replace(
+      "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/",
+      "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/sing/",
+    )
+    .replace(
+      "https://fastly.jsdelivr.net/gh/SagerNet/sing-geosite@rule-set/",
+      "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/",
+    )
+    .replace(
+      /^(?:https:\/\/(?:ghfast\.top|gh\.xiaozl\.net)\/)?(?=https:\/\/raw\.githubusercontent\.com\/)/,
+      "https://gh.xiaozl.net/",
+    );
   if (ruleSet.download_detour && ruleSet.download_detour !== "direct") {
     ruleSet.http_client = ruleSet.http_client || {};
     ruleSet.http_client.detour = ruleSet.http_client.detour || ruleSet.download_detour;
@@ -368,7 +377,7 @@ ensureRuleSetOnce("category-ads-all", {
   tag: "category-ads-all",
   type: "remote",
   format: "binary",
-  url: "https://fastly.jsdelivr.net/gh/SagerNet/sing-geosite@rule-set/geosite-category-ads-all.srs"
+  url: "https://gh.xiaozl.net/https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs"
 });
 
 if (!config.route.rules.some(r => hasRuleSet(r, "category-ads-all"))) {
