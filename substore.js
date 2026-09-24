@@ -134,9 +134,10 @@ else config.http_clients.push({ tag: RULE_SET_HTTP_CLIENT_TAG, detour: "proxy" }
 config.route.default_http_client = RULE_SET_HTTP_CLIENT_TAG;
 
 for (const ruleSet of config.route.rule_set) {
-  if (ruleSet.url?.startsWith("https://ghfast.top/https://raw.githubusercontent.com/")) {
-    ruleSet.url = ruleSet.url.slice("https://ghfast.top/".length);
-  }
+  ruleSet.url = ruleSet.url?.replace(
+    /^https:\/\/(?:ghfast\.top\/https:\/\/)?raw\.githubusercontent\.com\/MetaCubeX\/meta-rules-dat\/refs\/heads\/sing\//,
+    "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/",
+  );
   if (ruleSet.download_detour && ruleSet.download_detour !== "direct") {
     ruleSet.http_client = ruleSet.http_client || {};
     ruleSet.http_client.detour = ruleSet.http_client.detour || ruleSet.download_detour;
