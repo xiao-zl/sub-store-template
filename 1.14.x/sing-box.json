@@ -555,40 +555,45 @@
       "type": "urltest",
       "outbounds": [],
       "url": "https://www.gstatic.com/generate_204",
-      "interval": "5m",
-      "tolerance": 50
+      "interval": "10m",
+      "tolerance": 100,
+      "idle_timeout": "10m"
     },
     {
       "tag": "tw-auto",
       "type": "urltest",
       "outbounds": [],
       "url": "https://www.gstatic.com/generate_204",
-      "interval": "5m",
-      "tolerance": 50
+      "interval": "10m",
+      "tolerance": 100,
+      "idle_timeout": "10m"
     },
     {
       "tag": "jp-auto",
       "type": "urltest",
       "outbounds": [],
       "url": "https://www.gstatic.com/generate_204",
-      "interval": "5m",
-      "tolerance": 50
+      "interval": "10m",
+      "tolerance": 100,
+      "idle_timeout": "10m"
     },
     {
       "tag": "sg-auto",
       "type": "urltest",
       "outbounds": [],
       "url": "https://www.gstatic.com/generate_204",
-      "interval": "5m",
-      "tolerance": 50
+      "interval": "10m",
+      "tolerance": 100,
+      "idle_timeout": "10m"
     },
     {
       "tag": "us-auto",
       "type": "urltest",
       "outbounds": [],
       "url": "https://www.gstatic.com/generate_204",
-      "interval": "5m",
-      "tolerance": 50
+      "interval": "10m",
+      "tolerance": 100,
+      "idle_timeout": "10m"
     },
     {
       "tag": "all-auto",
@@ -601,8 +606,9 @@
         "us-auto"
       ],
       "url": "https://www.gstatic.com/generate_204",
-      "interval": "5m",
-      "tolerance": 50
+      "interval": "10m",
+      "tolerance": 100,
+      "idle_timeout": "10m"
     },
     {
       "tag": "GLOBAL",
